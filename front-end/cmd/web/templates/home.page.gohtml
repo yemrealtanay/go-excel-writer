@@ -6,57 +6,105 @@
             <div class="col">
                 <h1 class="mt-5">Magna Parametre Formu</h1>
                 <hr>
-                <a id="brokerBtn" class="btn btn-outline-secondary" href="javascript:void(0)">Test Broker</a>
-
-                <div id="output" class="mt-5" style="outline: 1px solid silver; padding: 2em;">
-                    <span class="text-muted">Output shows here...</span>
-                </div>
-
             </div>
         </div>
 
-        <div class="row">
-            <div class="col">
-                <h4 class="mt-5">Sent</h4>
-                <div class="mt-1" style="outline: 1px solid silver; padding: 2em;">
-                    <pre id="payload"><span class="text-muted">Nothing sent yet...</span></pre>
-                </div>
-            </div>
-            <div class="col">
-                <h4 class="mt-5">Received</h4>
-                <div class="mt-1" style="outline: 1px solid silver; padding: 2em;">
-                    <pre id="received"><span class="text-muted">Nothing received yet...</span></pre>
-                </div>
-            </div>
-        </div>
+        <form id="parametreForm" class="container my-4">
+            <h2 class="text-center mb-4">Parametre Takip Formu</h2>
 
+            <!-- Üst Bölüm -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="urunAdi" class="form-label">Ürün Adı</label>
+                    <input type="text" class="form-control" id="urunAdi" name="urunAdi" placeholder="Ürün Adını Girin">
+                </div>
+
+                <div class="col-md-6">
+                    <label for="makina" class="form-label">Makina</label>
+                    <input type="text" class="form-control" id="makina" name="makina" placeholder="Makina Adını Girin">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="kurutma" class="form-label">Kurutma</label>
+                    <input type="text" class="form-control" id="kurutma" name="kurutma" placeholder="Kurutma">
+                </div>
+                <div class="col-md-6">
+                    <label for="cycleTime" class="form-label">Cycle Time</label>
+                    <input type="text" class="form-control" id="cycleTime" name="cycleTime" placeholder="Süre Girin">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="agirlik" class="form-label">Ağırlık</label>
+                    <input type="text" class="form-control" id="agirlik" name="agirlik" placeholder="Ağırlık Girin (g)">
+                </div>
+                <div class="col-md-6">
+                    <label for="enjeksiyonSuresi" class="form-label">Enjeksiyon Süresi</label>
+                    <input type="number" class="form-control" id="enjeksiyonSuresi" name="enjeksiyonSuresi" placeholder="Süre Girin">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="sogutmaSuresi" class="form-label">Soğutma Süresi</label>
+                    <input type="number" class="form-control" id="sogutmaSuresi" name="sogutmaSuresi" placeholder="Süre Girin">
+                </div>
+                <div class="col-md-6">
+                    <label for="malAlmaZamani" class="form-label">Mal Alma Zamanı</label>
+                    <input type="number" class="form-control" id="malAlmaZamani" name="malAlmaZamani" placeholder="Süre Girin">
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">Gönder</button>
+            </div>
+        </form>
+
+        <div id="output" class="mt-5" style="outline: 1px solid silver; padding: 2em;">
+            <span class="text-muted">Servisten dönen yanıt burada görünecek...</span>
+        </div>
     </div>
+
 {{end}}
 
 {{define "js"}}
 <script>
-    let brokerBtn = document.getElementById("brokerBtn");
-    let output = document.getElementById("output");
-    let sent = document.getElementById("payload");
-    let received = document.getElementById("received");
+    document.getElementById("parametreForm").addEventListener("submit", function(e) {
+        e.preventDefault(); // Formun varsayılan gönderimini engelle
 
-    brokerBtn.addEventListener("click", function() {
-        const body = {
-            method: 'POST',
-        }
+        // Form verilerini al
+        let formData = new FormData(this);
 
-        fetch("http:\/\/localhost:8080", body).then((response) => response.json())
+        // Form verilerini JSON formatına çevir
+        let jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
+        // Broker servisine POST isteği gönder
+        fetch("http://localhost:8080", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then((response) => response.json())
             .then((data) => {
-                sent.innerHTML = "boş request";
-                received.innerHTML = JSON.stringify(data, undefined, 4);
-                if(data.error){
-                    console.log(data.message)
-                }else {
-                    output.innerHTML += `<br><strong>Response from broker service</strong>: ${data.message}`;
-                }
+                // Servisten dönen yanıtı ekrana yazdır
+                document.getElementById("output").innerHTML = `
+                <strong>Broker Servis Yanıtı:</strong>
+                <pre>${JSON.stringify(data, null, 4)}</pre>
+            `;
             })
             .catch((error) => {
-                output.innerHTML += "<br><br>Error: " + error;
+                document.getElementById("output").innerHTML = `
+                <strong>Hata Oluştu:</strong>
+                <pre>${error}</pre>
+            `;
             });
     });
 </script>
